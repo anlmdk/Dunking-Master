@@ -4,119 +4,66 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    public const float MAX_SWIPE_TIME = 0.5f;
-    public const float MIN_SWIPE_DISTANCE = 0.17f;
-    Vector2 startPos;
-    float startTime;
-
-
     [SerializeField] private float moveSpeed;
+    [SerializeField] private float forceMultiplier = 3;
+    [SerializeField ]private bool isShoot;
 
-    [SerializeField] private Transform ball;
-    [SerializeField] private Transform posDribble;
-    [SerializeField] private Transform target;
+    Rigidbody rb;
+    Vector3 startPosition, endPosition;
+    public Transform targetPosition;
+    float directionX, directionY;
 
-    private bool isBallFlying = false;
-    private float timer = 0;
+    public GameObject gameOverPanel;
 
     void Start()
     {
-        
+        rb = GetComponent<Rigidbody>();
     }
     void Update()
     {
-        Dribble();
         Move();
-        BallFly();
+        GameOver();
     }
     public void Move()
     {
-#if UNITY_EDITOR
-        Vector3 direction = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical"));
-        transform.position += direction * moveSpeed * Time.deltaTime;
-#endif
-        /*if (Input.touches.Length > 0)
+        if (Input.GetMouseButtonDown(0))
         {
-            Touch t = Input.GetTouch(0);
-            if (t.phase == TouchPhase.Began)
-            {
-                startPos = new Vector2(t.position.x / (float)Screen.width, t.position.y / (float)Screen.width);
-                startTime = Time.time;
-            }
-            if (t.phase == TouchPhase.Ended)
-            {
-                if (Time.time - startTime > MAX_SWIPE_TIME) // press too long
-                    return;
-
-                Vector2 endPos = new Vector2(t.position.x / (float)Screen.width, t.position.y / (float)Screen.width);
-
-                Vector2 swipe = new Vector2(endPos.x - startPos.x, endPos.y - startPos.y);
-
-                if (swipe.magnitude < MIN_SWIPE_DISTANCE) // Too short swipe
-                    return;
-
-                if (Mathf.Abs(swipe.x) > Mathf.Abs(swipe.y))
-                { // Horizontal swipe
-                    if (swipe.x > 0)
-                    {
-                        direction = Vector2.right;
-                    }
-                    else
-                    {
-                        direction = Vector2.left;
-                    }
-                }
-                else
-                { // Vertical swipe
-                    if (swipe.y > 0)
-                    {
-                        direction = Vector2.up;
-                    }
-                    else
-                    {
-                        direction = Vector2.down;
-                    }
-                }
-            }
-        }*/
-    }
-    public void Dribble()
-    {
-        ball.position = posDribble.position + Vector3.up * Mathf.Abs(Mathf.Sin(Time.time * 3));
-
-        if (Input.GetKeyUp(KeyCode.Space))
+            Destroy(GameObject.Find("StartButton"));
+            startPosition = Input.mousePosition;
+        }
+        else if (Input.GetMouseButton(0))
         {
-            isBallFlying = true;
-            timer = 0;
+            endPosition = Input.mousePosition;
+
+            directionX = endPosition.x - startPosition.x;
+            directionY = endPosition.y - startPosition.y;
+
+            rb.velocity += new Vector3(directionX * moveSpeed * Time.deltaTime, 0, directionY * moveSpeed * Time.deltaTime);
+        }
+        else if (Input.GetMouseButtonUp(0))
+        {
+            if (directionY > 50f && directionY < 250)
+            {
+                Shoot(endPosition - startPosition);
+            }
+            startPosition = Vector3.zero;
+            endPosition = Vector3.zero;
         }
     }
-    public void BallFly()
+    void Shoot(Vector3 Force)
     {
-        if (isBallFlying)
-        {
-            timer += Time.deltaTime;
-            float duration = 0.5f;
-            float lastTime = timer / duration;
+        if (isShoot)
+            return;
 
-            Vector3 startPosition = ball.position;
-            Vector3 endPosition = target.position;
-            Vector3 pos = Vector3.Lerp(startPosition, endPosition, lastTime);
-
-            Vector3 arc = Vector3.up * 5 * Mathf.Sin(lastTime * 3.14f);
-            ball.position = pos + arc;
-
-            if (lastTime >= 1)
-            {
-            isBallFlying = false;
-            ball.GetComponent<Rigidbody>().isKinematic = false;
-            }
-        }
+        rb.AddTorque(Force);
+        rb.AddForce(new Vector3(Force.x, Force.y, Force.y) * forceMultiplier);
+        isShoot = true;
     }
-    private void OnTriggerEnter(Collider other)
+    public void GameOver()
     {
-        if (other.gameObject.CompareTag("TargetArea"))
+        if(transform.position.y < 0)
         {
-        transform.LookAt(target.parent.position);
+            gameOverPanel.SetActive(true);
         }
     }
 }
