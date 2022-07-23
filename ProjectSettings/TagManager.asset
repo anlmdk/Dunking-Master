@@ -6,6 +6,7 @@ TagManager:
   tags:
   - TargetArea
   - Ground
+  - Success
   layers:
   - Default
   - TransparentFX

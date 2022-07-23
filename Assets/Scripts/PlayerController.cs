@@ -5,15 +5,18 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     [SerializeField] private float moveSpeed;
-    [SerializeField] private float forceMultiplier = 3;
-    [SerializeField ]private bool isShoot;
+    [SerializeField] private float jump;
+    [SerializeField] private float forceMultiplier = 2;
 
     Rigidbody rb;
-    Vector3 startPosition, endPosition;
     public Transform targetPosition;
+
+    Vector3 startPosition, endPosition;
+
+    bool shoot;
     float directionX, directionY;
 
-    public GameObject gameOverPanel;
+    public GameObject gameOverPanel, gameWinPanel;
 
     void Start()
     {
@@ -42,28 +45,59 @@ public class PlayerController : MonoBehaviour
         }
         else if (Input.GetMouseButtonUp(0))
         {
-            if (directionY > 50f && directionY < 250)
+            if (directionY > 100f && directionY < 300f)
             {
-                Shoot(endPosition - startPosition);
+                Shoot();
+            }
+            else if (directionY < -100f && directionY > -300f)
+            {
+                Shoot();
             }
             startPosition = Vector3.zero;
             endPosition = Vector3.zero;
         }
     }
-    void Shoot(Vector3 Force)
+    public void Shoot()
     {
-        if (isShoot)
-            return;
-
-        rb.AddTorque(Force);
-        rb.AddForce(new Vector3(Force.x, Force.y, Force.y) * forceMultiplier);
-        isShoot = true;
+        rb.AddForce(new Vector3(0,1,0.5f) * forceMultiplier);
+        shoot = true;
     }
     public void GameOver()
     {
         if(transform.position.y < 0)
         {
             gameOverPanel.SetActive(true);
+        }
+    }
+    private void OnTriggerExit(Collider other)
+    {
+         if (other.gameObject.CompareTag("Success"))
+         {
+            gameWinPanel.SetActive(true);
+         }
+        else
+        {
+            shoot = false;
+        }
+    }
+    private void OnTriggerStay(Collider other)
+    {
+        if (other.gameObject.CompareTag("TargetArea"))
+        {
+            if(shoot == true)
+            {
+                transform.LookAt(targetPosition.parent.position);
+                Vector3.MoveTowards(transform.position, targetPosition.position, 100f);
+                transform.up = targetPosition.transform.position - transform.position;
+                Quaternion.Euler(targetPosition.rotation.x - transform.rotation.x, targetPosition.rotation.y - transform.rotation.y, targetPosition.rotation.z - transform.rotation.z);
+            }
+        }
+    }
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Ground"))
+        {
+            rb.AddForce(Vector3.up * jump);
         }
     }
 }
