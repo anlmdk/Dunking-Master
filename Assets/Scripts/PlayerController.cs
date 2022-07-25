@@ -33,6 +33,8 @@ public class PlayerController : MonoBehaviour
         {
             Destroy(GameObject.Find("StartButton"));
             startPosition = Input.mousePosition;
+            rb.freezeRotation = false;
+            rb.constraints = RigidbodyConstraints.None;
         }
         else if (Input.GetMouseButton(0))
         {
@@ -42,19 +44,22 @@ public class PlayerController : MonoBehaviour
             directionY = endPosition.y - startPosition.y;
 
             rb.velocity += new Vector3(directionX * moveSpeed * Time.deltaTime, 0, directionY * moveSpeed * Time.deltaTime);
+
         }
         else if (Input.GetMouseButtonUp(0))
         {
-            if (directionY > 100f && directionY < 300f)
+            if (directionY > 100f)
             {
                 Shoot();
             }
-            else if (directionY < -100f && directionY > -300f)
+            else if (directionY < -100f)
             {
                 Shoot();
             }
             startPosition = Vector3.zero;
             endPosition = Vector3.zero;
+            rb.freezeRotation = true;
+            rb.constraints = RigidbodyConstraints.FreezePositionX;
         }
     }
     public void Shoot()
@@ -87,8 +92,9 @@ public class PlayerController : MonoBehaviour
             if(shoot == true)
             {
                 transform.LookAt(targetPosition.parent.position);
-                Vector3.MoveTowards(transform.position, targetPosition.position, 100f);
                 transform.up = targetPosition.transform.position - transform.position;
+                Vector3.MoveTowards(transform.position, targetPosition.position, 5f);
+
                 Quaternion.Euler(targetPosition.rotation.x - transform.rotation.x, targetPosition.rotation.y - transform.rotation.y, targetPosition.rotation.z - transform.rotation.z);
             }
         }
