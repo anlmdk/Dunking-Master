@@ -6,11 +6,8 @@ public class FollowPlayer : MonoBehaviour
 {
     public Transform player;
 
-    public float targetPos;
     [SerializeField] public Vector3 offset;
-    [SerializeField] public Quaternion rotation;
     [SerializeField] private float smoothSpeed = 0.03f;
-    [SerializeField] private float turnSpeed = 0.03f;
 
     void FixedUpdate()
     {

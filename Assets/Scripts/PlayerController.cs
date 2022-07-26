@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using DG.Tweening;
 
 public class PlayerController : MonoBehaviour
 {
@@ -10,10 +11,11 @@ public class PlayerController : MonoBehaviour
 
     Rigidbody rb;
     public Transform targetPosition;
+    public float shootTime;
 
     Vector3 startPosition, endPosition;
 
-    bool shoot;
+    public bool shoot;
     float directionX, directionY;
 
     public GameObject gameOverPanel, gameWinPanel;
@@ -21,6 +23,7 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody>();
+        DOTween.Init();
     }
     void Update()
     {
@@ -32,7 +35,7 @@ public class PlayerController : MonoBehaviour
         if (Input.GetMouseButtonDown(0))
         {
             Destroy(GameObject.Find("StartButton"));
-            startPosition = Input.mousePosition;
+            startPosition = Input.mousePosition;;
             rb.freezeRotation = false;
             rb.constraints = RigidbodyConstraints.None;
         }
@@ -48,11 +51,7 @@ public class PlayerController : MonoBehaviour
         }
         else if (Input.GetMouseButtonUp(0))
         {
-            if (directionY > 100f)
-            {
-                Shoot();
-            }
-            else if (directionY < -100f)
+            if (directionY > 200f || directionY < -200f)
             {
                 Shoot();
             }
@@ -64,8 +63,15 @@ public class PlayerController : MonoBehaviour
     }
     public void Shoot()
     {
-        rb.AddForce(new Vector3(0,1,0.5f) * forceMultiplier);
-        shoot = true;
+        rb.AddForce(new Vector3(0, 1, 0.5f) * forceMultiplier);
+        if (shoot == true)
+        {
+            transform.DOJump(targetPosition.position, 1f, 1, shootTime, false);
+        }
+        else
+        {
+            transform.position = new Vector3(transform.position.x, transform.position.y, transform.position.z);
+        }
     }
     public void GameOver()
     {
@@ -80,23 +86,16 @@ public class PlayerController : MonoBehaviour
          {
             gameWinPanel.SetActive(true);
          }
-        else
-        {
+         else if (other.gameObject.CompareTag("TargetArea"))
+         {
             shoot = false;
-        }
+         }
     }
-    private void OnTriggerStay(Collider other)
+    private void OnTriggerEnter(Collider other)
     {
         if (other.gameObject.CompareTag("TargetArea"))
         {
-            if(shoot == true)
-            {
-                transform.LookAt(targetPosition.parent.position);
-                transform.up = targetPosition.transform.position - transform.position;
-                Vector3.MoveTowards(transform.position, targetPosition.position, 5f);
-
-                Quaternion.Euler(targetPosition.rotation.x - transform.rotation.x, targetPosition.rotation.y - transform.rotation.y, targetPosition.rotation.z - transform.rotation.z);
-            }
+            shoot = true;
         }
     }
     private void OnCollisionEnter(Collision collision)
